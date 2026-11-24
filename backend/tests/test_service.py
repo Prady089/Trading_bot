@@ -23,8 +23,13 @@ class FakeFeed(DataFeed):
     def __init__(self):
         self.bars: dict[str, list[Bar]] = {}
 
+    trading = True   # False simulates an NSE holiday: no candles for today
+
     def history(self, symbol, interval, period):
-        return self.bars.get(symbol.upper(), [])
+        sym = symbol.upper()
+        if sym == "NIFTY" and sym not in self.bars:   # the service's holiday probe
+            return [Bar("NIFTY", DAY.replace(hour=9, minute=15), 1, 1, 1, 1, 0)] if self.trading else []
+        return self.bars.get(sym, [])
 
     def latest_completed(self, symbol, interval, now):
         return self.history(symbol, interval, "")

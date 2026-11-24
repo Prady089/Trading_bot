@@ -42,6 +42,8 @@ export default function ConfigForm({
     api<Meta>("/api/meta")
       .then((m) => {
         setMeta(m);
+        const want = new URLSearchParams(window.location.search).get("strategy");
+        if (want && m.strategies.some((s) => s.name === want)) setStrategy(want);
         setSymbols(m.default_symbols.slice(0, 5).join(", "));
         setSl(String(m.settings.default_stop_loss_pct));
         setTp(String(m.settings.default_take_profit_pct));

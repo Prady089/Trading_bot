@@ -40,7 +40,7 @@ export default function BacktestPage() {
     <>
       <header className="page-head">
         <div>
-          <Link href="/settings" className="small">← Settings</Link>
+          <Link href="/strategies" className="small">← Strategies</Link>
           <h1>Backtest</h1>
           <p className="muted">
             Replay history through the same engine the live bot uses: next-bar fills, slippage and full NSE charges.

@@ -111,3 +111,27 @@ def test_auto_futures_skips_without_margin(tmp_path):
     svc.update_settings({"futures_auto_enabled": True})
     assert svc.auto_enter(t0) == []
     assert svc.portfolio()["positions"] == []
+
+
+def test_holiday_no_trades_and_stale_entries_voided(tmp_path):
+    feed, svc = make(tmp_path, 500_000)
+    feed.trading = False                                    # NSE holiday: no candles today
+    t0 = DAY.replace(hour=10, minute=21)
+    svc.clock = lambda: t0
+    feed.bars["NIFTY-FUT"] = minute_bars("NIFTY-FUT", [25_000.0], DAY - timedelta(days=1, hours=-15))
+    assert not svc.market_open(t0)
+    svc.update_settings({"futures_auto_enabled": True})
+    assert svc.auto_enter(t0) == []                         # bot refuses to trade on yesterday's price
+
+    # A position that slipped in before the guard existed gets cancelled, money and charges refunded.
+    feed.trading = True
+    svc._live_check = None
+    svc.manual_order("NIFTY-FUT", "SELL", None, None, 0.5, 1.0, lots=1)
+    assert svc.portfolio()["equity"] < 500_000              # entry charges paid
+    feed.trading = False
+    svc._live_check = None
+    svc.tick(t0 + timedelta(minutes=10))
+    pf = svc.portfolio()
+    assert pf["positions"] == [] and pf["equity"] == pytest.approx(500_000)
+    assert svc.trades() == []
+    assert svc.status()["market_open"] is False

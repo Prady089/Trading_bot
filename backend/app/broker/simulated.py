@@ -144,6 +144,16 @@ class SimulatedBroker:
         self.last_price[symbol] = price
         return t
 
+    def void_position(self, symbol: str) -> Position | None:
+        """Undo an entry as if it never happened (refunds price and entry charges). For fills on bad data."""
+        p = self.positions.pop(symbol, None)
+        if not p:
+            return None
+        self.cash += p.qty * p.avg_price + p.entry_charges
+        self.total_charges -= p.entry_charges
+        self.last_price.pop(symbol, None)
+        return p
+
     # ---------- persistence ----------
     def snapshot(self) -> dict:
         return {"cash": self.cash, "total_charges": self.total_charges,

@@ -149,42 +149,9 @@ export default function SettingsPage() {
       </section>
 
       <section className="card">
-        <h2>Strategy guide</h2>
-        <details className="guide" open>
-          <summary>🤖 AI Predictor (used by Auto mode)</summary>
-          <p className="small">
-            Every 15 minutes it looks at each NIFTY 50 stock&apos;s recent candles: how much it moved in the last 15 minutes, hour and
-            4 hours, whether it&apos;s up or down since the open, RSI (overbought/oversold), trend direction, unusual volume, and
-            time of day. A model trained on the last 60 days turns that into a <strong>predicted return for the next hour</strong>.
-            The bot buys the highest predictions and exits by your target, stop-loss or time limit.
-          </p>
-        </details>
-        <details className="guide">
-          <summary>📈 EMA crossover (trend following)</summary>
-          <p className="small">Compares a fast average price (last 9 candles) with a slow one (last 21). Fast above slow means an uptrend, so buy. Fast below slow means a downtrend, so sell. Works in trending markets and loses in choppy ones.</p>
-        </details>
-        <details className="guide">
-          <summary>🔄 RSI reversion (buy the dip)</summary>
-          <p className="small">RSI measures how stretched a move is (0–100). Below 30 means &ldquo;oversold&rdquo;, so buy and expect a bounce. Above 70 means &ldquo;overbought&rdquo;, so sell. Exit when RSI returns to 50.</p>
-        </details>
-        <details className="guide">
-          <summary>🚀 Opening range breakout</summary>
-          <p className="small">Marks the high and low of the first 30 minutes after 09:15. If the price breaks above that range, buy. If it breaks below, sell. At most one trade per stock per day.</p>
-        </details>
-        <details className="guide">
-          <summary>📊 What the numbers mean</summary>
-          <ul className="small">
-            <li><strong>Win rate</strong>: the share of trades that made money. You can win 70% and still lose money if the losses are bigger than the wins.</li>
-            <li><strong>Profit factor</strong>: total profits ÷ total losses. Above 1.0 means profitable overall.</li>
-            <li><strong>Expectancy</strong>: average rupees made or lost per trade, after charges.</li>
-            <li><strong>Max drawdown</strong>: the biggest fall from a high point, i.e. the worst stretch you&apos;d have to sit through.</li>
-            <li><strong>Charges</strong>: brokerage, STT, exchange fee, SEBI fee, stamp duty and GST. Roughly ₹40–60 per ₹1 lakh round trip.</li>
-          </ul>
-        </details>
-        <div className="link-row">
-          <Link href="/backtest" className="btn ghost">Test strategies on past data</Link>
-          <Link href="/runs" className="btn ghost">Backtest history</Link>
-        </div>
+        <h2>Strategies &amp; backtests</h2>
+        <p className="muted small">How each strategy works, its live results and the backtest lab are on the Strategies tab.</p>
+        <Link href="/strategies" className="btn ghost wide center">Open Strategies</Link>
       </section>
 
       <section className="card">

@@ -71,6 +71,7 @@ class TradingService:
         self._day: str | None = None
         self._day_start_equity = 0.0
         self.halted = False
+        self._live_check: tuple[str, bool, datetime] | None = None   # (day, live?, checked_at)
         self._load_account()
         if hasattr(scanner, "on_event"):
             scanner.on_event = lambda msg, level="info": self._event(msg, level)
@@ -129,7 +130,49 @@ class TradingService:
 
     # ---------- market clock ----------
     def market_open(self, now: datetime) -> bool:
+        """Open by the clock AND actually trading today (catches NSE holidays and dead data feeds)."""
+        return self._clock_open(now) and self.trading_today(now)
+
+    def _clock_open(self, now: datetime) -> bool:
         return now.weekday() < 5 and self.s.market_open <= now.time() < self.s.market_close
+
+    HOLIDAY_PROBE = "NIFTY"
+
+    def trading_today(self, now: datetime) -> bool:
+        """True once today's candles exist. NSE holidays have none, so the bot must not trade on
+        yesterday's prices. Re-checked every 5 minutes until confirmed; cached for the day after."""
+        if now.weekday() >= 5:
+            return False
+        day = now.date().isoformat()
+        open_dt = datetime.combine(now.date(), self.s.market_open, IST)
+        if now < open_dt + timedelta(minutes=5):
+            return True   # first candles can take a few minutes to appear
+        c = self._live_check
+        if c and c[0] == day and (c[1] or now - c[2] < timedelta(minutes=5)):
+            return c[1]
+        try:
+            bars = self.feed.history_many([self.HOLIDAY_PROBE], "1m", "1d").get(self.HOLIDAY_PROBE, [])
+            live = bool(bars) and bars[-1].ts.date() == now.date()
+        except Exception:  # noqa: BLE001
+            log.exception("holiday check failed")
+            live = c[1] if c and c[0] == day else False
+        if not live and (not c or c[0] != day or c[1]):
+            self._event("No market data today (NSE holiday or data outage): trading paused", "warn")
+        self._live_check = (day, live, now)
+        return live
+
+    def _void_stale_entries(self, now: datetime) -> None:
+        """Cancel today's entries that were filled while the market wasn't really trading."""
+        with self.lock:
+            stale = [s for s, p in self.broker.positions.items() if p.entry_ts.date() == now.date()]
+            for sym in stale:
+                p = self.broker.void_position(sym)
+                self.last_checked.pop(sym, None)
+                self._event(f"VOIDED {sym}: filled at a stale price on a non-trading day, cancelled at no cost "
+                            f"(entry {p.avg_price:.2f})", "warn")
+            if stale:
+                self._save()
+                self._snapshot_equity(now)
 
     def _scan_slot(self, now: datetime) -> datetime:
         """Start of the current 15-minute candle (aligned to 09:15)."""
@@ -174,6 +217,9 @@ class TradingService:
         in_session = now.weekday() < 5 and self.s.market_open <= now.time() < \
             (datetime.combine(now.date(), self.s.market_close) + timedelta(minutes=5)).time()
         if not in_session:
+            return
+        if self._clock_open(now) and not self.trading_today(now):
+            self._void_stale_entries(now)
             return
         self.monitor(now)
         slot = self._scan_slot(now)

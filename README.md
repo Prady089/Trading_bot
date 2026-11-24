@@ -31,12 +31,13 @@ The PWA installs to your home screen only on HTTPS. Locally it works as a normal
 After deploying (Vercel for the frontend, Railway or a VPS for the backend), open it on your phone
 and choose "Add to Home screen".
 
-## The app (4 tabs)
+## The app (5 tabs)
 
 - **Home**: account value, today's P&L, Auto bot status, top picks, recent activity
 - **Trading**: top 5 NIFTY 50 stocks ranked by predicted next-hour return. **Manual**: tap a stock, set amount, stop-loss and target, then Buy or Sell short. **Auto**: the bot trades the top picks by your rules.
+- **Strategies**: the two AI strategies Auto runs (stocks, index futures) with live results, plus the rule-based strategies with their latest backtest
 - **Portfolio**: open positions (with Close), Auto vs Manual results, equity curve, trade history with ₹ and % profit
-- **Settings**: auto-trading rules, strategy guide, account reset, backtest lab
+- **Settings**: auto-trading rules (stocks and futures), account reset, API key
 
 ## How it works
 
@@ -62,6 +63,7 @@ and choose "Add to Home screen".
 - Models are judged on **live** forecasts (made before the outcome existed), not just backtests, and
   must beat "always guess up", not 50%.
 - The scanner ignores the 15m candle that is still forming, so live features match training features.
+- On NSE holidays (no candles for today) the bot pauses instead of trading on yesterday's prices.
 
 ## Data limits (yfinance)
 1m bars: last 7 days · 5m/15m/30m: last 60 days · 1h: ~2 years · 1d: decades.
