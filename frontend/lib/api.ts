@@ -295,3 +295,15 @@ export type PaperStatus = {
   metrics?: Metrics;
   last_run?: { strategy: string; interval: string; symbols: string[]; status: string; metrics: Metrics | null } | null;
 };
+
+export type ShadowPosition = {
+  symbol: string; side: "LONG" | "SHORT"; qty: number; entry_price: number; entry_ts: string;
+  last_price: number; unrealized_pnl: number; stop_price: number | null; target_price: number | null;
+};
+export type ShadowAccount = {
+  id: string; title: string; strategy: string; interval: string; note: string;
+  start_date: string; initial_capital: number; equity: number; cash: number;
+  realized_pnl: number; unrealized_pnl: number; metrics: Metrics;
+  positions: ShadowPosition[]; trades: Trade[]; data_as_of: string | null;
+};
+export type ShadowSummary = { updated_at: string | null; error: string | null; accounts: ShadowAccount[] };

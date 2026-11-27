@@ -13,6 +13,7 @@ from app.config import DEFAULT_SYMBOLS, NIFTY_50, settings
 from app.data.feed import INTERVAL_MINUTES, YFinanceFeed
 from app.engine.backtest import run_backtest
 from app.live.service import TradingService
+from app.live.shadow import ShadowRunner
 from app.predict.scanner import PROMOTE_IC_MARGIN, PROMOTE_MIN_CANDLES, Scanner
 from app.storage.db import Store
 from app.strategies import REGISTRY
@@ -23,12 +24,15 @@ store = Store(settings.db_path)
 feed = YFinanceFeed(settings)
 scanner = Scanner(feed, NIFTY_50, store=store)
 service = TradingService(feed, store, scanner, settings)
+shadow = ShadowRunner(feed, store, settings)
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     service.start()
+    shadow.start()
     yield
+    shadow.stop()
     service.stop()
 
 
@@ -94,6 +98,12 @@ def set_champion(req: ChampionRequest):
         raise bad_request(e) from e
     scanner.refresh_async()  # re-rank picks with the new champion
     return {"champion": scanner.champion}
+
+
+@app.get("/api/shadow")
+def shadow_accounts():
+    """Rule-based strategies paper-trading live, each in its own Rs 5 lakh account."""
+    return shadow.summary()
 
 
 @app.get("/api/futures")

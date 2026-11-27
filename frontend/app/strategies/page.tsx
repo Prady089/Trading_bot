@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import ShadowAccounts from "@/components/ShadowAccounts";
 import type { AccountTrade, Bot, Meta, Run } from "@/lib/api";
 import { usePoll } from "@/lib/hooks";
 import { pct, signedMoney, tone } from "@/lib/format";
@@ -72,6 +73,12 @@ export default function StrategiesPage() {
       <div className="page-head"><h1>Strategies</h1></div>
       {(bot.error || meta.error) && <div className="alert">Can&apos;t reach the backend: {bot.error || meta.error}</div>}
 
+      <h2 className="section-title">Live paper test</h2>
+      <section className="card">
+        <h2>🏁 Strategy race</h2>
+        <ShadowAccounts aiTrades={autoTrades} />
+      </section>
+
       <h2 className="section-title">Live in Auto mode</h2>
       <section className="card">
         <div className="row-between">
@@ -125,10 +132,10 @@ export default function StrategiesPage() {
         </div>
       </section>
 
-      <h2 className="section-title">Rule-based (backtest only)</h2>
+      <h2 className="section-title">Rule-based strategies</h2>
       <p className="muted small">
-        Classic strategies you can replay on past NSE data with full charges. They don&apos;t trade live yet: use them to
-        compare against the AI and against simply buying and holding.
+        Classic strategies you can replay on past NSE data with full charges. Supertrend, opening range and EMA (as a
+        daily swing) also run in the live paper test above.
       </p>
       {(meta.data?.strategies ?? []).map((s) => {
         const g = GUIDE[s.name];
