@@ -2,9 +2,11 @@ from app.strategies.base import Strategy
 from app.strategies.ema_crossover import EmaCrossover
 from app.strategies.rsi_reversion import RsiReversion
 from app.strategies.opening_range import OpeningRangeBreakout
+from app.strategies.supertrend import SupertrendFollow
+from app.strategies.vwap_pullback import VwapPullback
 
 REGISTRY: dict[str, type[Strategy]] = {
-    cls.name: cls for cls in (EmaCrossover, RsiReversion, OpeningRangeBreakout)
+    cls.name: cls for cls in (EmaCrossover, RsiReversion, OpeningRangeBreakout, SupertrendFollow, VwapPullback)
 }
 
 

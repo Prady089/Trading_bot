@@ -75,7 +75,7 @@ def test_stop_loss_hits():
     assert r.trades[0].exit_price == pytest.approx(95)  # gapped through 99 stop -> filled at open
 
 
-@pytest.mark.parametrize("name", ["ema_crossover", "rsi_reversion", "opening_range"])
+@pytest.mark.parametrize("name", ["ema_crossover", "rsi_reversion", "opening_range", "supertrend", "vwap_pullback"])
 def test_builtin_strategies_run(name):
     import math
     bars = []
@@ -87,3 +87,32 @@ def test_builtin_strategies_run(name):
     r = run_on_bars({"ABC": bars}, name, {}, "15m", Settings())
     assert r.metrics["trading_days"] > 0
     assert all(t.exit_ts >= t.entry_ts for t in r.trades)
+
+
+def test_supertrend_flips_with_trend():
+    import numpy as np
+    from app.strategies.indicators import supertrend
+    up = np.linspace(100, 130, 60)
+    c = np.concatenate([up, up[::-1]])
+    line, trend = supertrend(c * 1.002, c * 0.998, c, 10, 3.0)
+    assert trend[55] == 1 and trend[-1] == -1          # up in the rally, down after the reversal
+    assert line[55] < c[55] and line[-1] > c[-1]       # line sits below price in uptrend, above in downtrend
+
+
+def test_vwap_pullback_buys_dip_to_vwap_in_uptrend():
+    from app.strategies import build_strategy
+    from app.strategies.base import History
+    from app.strategies.indicators import session_vwap
+    h = History()
+    prev = datetime(2026, 1, 5, tzinfo=IST)
+    for i, p in enumerate(range(100)):                 # prior day: steady uptrend for the EMAs
+        h.append(Bar("ABC", prev.replace(hour=9, minute=15) + timedelta(minutes=3 * i), 90 + p * 0.1,
+                     90 + p * 0.1 + 0.05, 90 + p * 0.1 - 0.05, 90 + p * 0.1, 1000))
+    day = datetime(2026, 1, 6, 9, 15, tzinfo=IST)
+    for i, p in enumerate([100, 101, 102, 103, 104, 104.5, 105]):
+        h.append(Bar("ABC", day + timedelta(minutes=15 * i), p, p + 0.3, p - 0.3, p, 1000))
+    vwap = session_vwap(h.today())
+    # 11:00 candle dips to VWAP and closes back above it
+    h.append(Bar("ABC", day + timedelta(minutes=105), 104, 104.2, vwap - 0.1, vwap + 0.4, 1000))
+    sig = build_strategy("vwap_pullback").on_bar(h, 0)
+    assert sig.direction == 1 and sig.stop_loss_pct and sig.take_profit_pct == pytest.approx(sig.stop_loss_pct * 2, rel=0.01)

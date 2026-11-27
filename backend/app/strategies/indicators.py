@@ -35,3 +35,31 @@ def atr(high: np.ndarray, low: np.ndarray, close: np.ndarray, n: int = 14) -> np
     prev = np.concatenate([[close[0]], close[:-1]])
     tr = np.maximum(high - low, np.maximum(abs(high - prev), abs(low - prev)))
     return ema(tr, n)
+
+
+def supertrend(high: np.ndarray, low: np.ndarray, close: np.ndarray, n: int = 10,
+               mult: float = 3.0) -> tuple[np.ndarray, np.ndarray]:
+    """Supertrend line and direction (+1 up / -1 down). Standard final-band algorithm."""
+    a = atr(high, low, close, n)
+    mid = (high + low) / 2
+    up_basic, dn_basic = mid - mult * a, mid + mult * a
+    up, dn = up_basic.copy(), dn_basic.copy()
+    line = np.empty(len(close))
+    trend = np.ones(len(close), dtype=int)
+    for i in range(len(close)):
+        if i > 0:
+            up[i] = max(up_basic[i], up[i - 1]) if close[i - 1] > up[i - 1] else up_basic[i]
+            dn[i] = min(dn_basic[i], dn[i - 1]) if close[i - 1] < dn[i - 1] else dn_basic[i]
+            if trend[i - 1] == 1:
+                trend[i] = -1 if close[i] < up[i] else 1
+            else:
+                trend[i] = 1 if close[i] > dn[i] else -1
+        line[i] = up[i] if trend[i] == 1 else dn[i]
+    return line, trend
+
+
+def session_vwap(bars) -> float | None:
+    """Volume-weighted average of the typical price over the given (today's) bars."""
+    pv = sum((b.high + b.low + b.close) / 3 * b.volume for b in bars)
+    v = sum(b.volume for b in bars)
+    return pv / v if v > 0 else None

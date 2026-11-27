@@ -34,6 +34,10 @@ class History:
         return np.fromiter((b.low for b in self.bars), float, len(self.bars))
 
     @property
+    def volume(self) -> np.ndarray:
+        return np.fromiter((b.volume for b in self.bars), float, len(self.bars))
+
+    @property
     def last(self) -> Bar:
         return self.bars[-1]
 

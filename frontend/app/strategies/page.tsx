@@ -22,6 +22,16 @@ const GUIDE: Record<string, { title: string; icon: string; how: string; good: st
     how: "Marks the high and low of the first 30 minutes after 09:15. A break above that range is a buy, a break below is a sell. At most one trade per stock per day.",
     good: "News days with a clear direction after the open.", bad: "Quiet days where breakouts fade back into the range.",
   },
+  supertrend: {
+    title: "Supertrend", icon: "🌊",
+    how: "Draws a trailing line one volatility-band (3 × ATR) away from price. When price closes through it the trend has flipped: buy on a flip up, sell short on a flip down. Stop just beyond the line, target 2× the risk.",
+    good: "Days with one sustained move.", bad: "Sideways chop, which causes repeated small losses on false flips.",
+  },
+  vwap_pullback: {
+    title: "VWAP pullback", icon: "🎯",
+    how: "VWAP is the day's average price weighted by volume, the level big traders benchmark against. In an uptrend (price above VWAP, short average above long), buy when price dips to VWAP and closes back above it. Mirror for shorts. Stop 1 ATR beyond VWAP, target 2× risk, one trade per stock per day.",
+    good: "Trending days with orderly dips.", bad: "Days when price keeps crossing VWAP with no direction.",
+  },
 };
 
 type Stats = { trades: number; net: number; winRate: number | null };
